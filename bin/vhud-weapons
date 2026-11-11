@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Weapon (dev tool) loadout. Usage: vhud-weapons bar | equip SLOT | launch LABEL | list
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+CONF="$VHUD_HOME/weapons.conf"
+[ -f "$CONF" ] || CONF="$(dirname "$(readlink -f "$0")")/../config/weapons.conf"
+
+# split a conf line on unescaped '|' (escaped as \|)
+parse() { local l="${1//\\|/$'\x01'}"; IFS='|' read -r slot label kind mac lin <<<"$l"
+  mac="${mac//$'\x01'/|}"; lin="${lin//$'\x01'/|}"; }
+entries() { grep -Ev '^\s*(#|$)' "$CONF"; }
+
+launch_line() {
+  parse "$1"; local cmd="$lin"; [ "$OS" = Darwin ] && cmd="$mac"
+  cd "$(vhud_cwd)" 2>/dev/null
+  if [ "$kind" = gui ]; then nohup bash -c "$cmd" >/dev/null 2>&1 & disown; else eval "$cmd"; fi
+}
+
+bar() {
+  local cols; cols=$(tput cols 2>/dev/null || echo 100) line="" plain="" l
+  while IFS= read -r l; do parse "$l"; [ "$slot" = "-" ] && continue
+    line+="${C_RED}▌${C_WHITE}${slot}${C_DIM} ${label}${C_RST}  "; plain+="▌${slot} ${label}  "; done < <(entries)
+  local pad=$(( (cols - ${#plain}) / 2 )); [ $pad -lt 0 ] && pad=0
+  local rule; rule=$(printf '─%.0s' $(seq 1 "$cols"))
+  printf '\e[H\e[2J\e[?25l%s%s\e[0m\n' "$C_RED" "$rule"
+  printf '%*s%s\n' "$pad" '' "$line"
+  local hint="ALT+1-9 EQUIP   ALT+B BUY MENU   ALT+F TOGGLE HUD"
+  printf '%*s%s%s%s\n' $(( (cols - ${#hint}) / 2 )) '' "$C_DIM" "$hint" "$C_RST"
+}
+
+case "$1" in
+  bar) trap bar WINCH; while :; do bar; sleep 30 & wait $!; done ;;
+  equip) while IFS= read -r l; do parse "$l"; [ "$slot" = "$2" ] && { launch_line "$l"; exit; }; done < <(entries)
+         echo "No weapon in slot $2"; sleep 1 ;;
+  launch) while IFS= read -r l; do parse "$l"; [ "${label,,}" = "${2,,}" ] && { launch_line "$l"; exit; }; done < <(entries) ;;
+  list) entries | awk -F'|' '{print $1"  "$2"  ("$3")"}' ;;
+  *) echo "usage: $0 bar|equip N|launch NAME|list" >&2; exit 2 ;;
+esac

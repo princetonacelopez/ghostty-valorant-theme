@@ -1,0 +1,25 @@
+# Valorant-inspired Ghostty theme
+# Navy #0F1923 / Red #FF4655 / Off-white #ECE8E1 / Teal #17DEA6
+background = 0F1923
+foreground = ECE8E1
+cursor-color = FF4655
+cursor-text = 0F1923
+selection-background = FF4655
+selection-foreground = 0F1923
+
+palette = 0=#1F2326
+palette = 1=#FF4655
+palette = 2=#17DEA6
+palette = 3=#F0B232
+palette = 4=#4FA3E0
+palette = 5=#C06BFF
+palette = 6=#3FD0C9
+palette = 7=#ECE8E1
+palette = 8=#768079
+palette = 9=#FF6B78
+palette = 10=#4DF0C0
+palette = 11=#FFC857
+palette = 12=#7BBDF0
+palette = 13=#D79BFF
+palette = 14=#6FE3DD
+palette = 15=#FFFFFF

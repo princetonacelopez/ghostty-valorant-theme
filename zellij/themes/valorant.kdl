@@ -1,0 +1,15 @@
+themes {
+    valorant {
+        fg "#ECE8E1"
+        bg "#0F1923"
+        black "#1F2326"
+        red "#FF4655"
+        green "#17DEA6"
+        yellow "#F0B232"
+        blue "#4FA3E0"
+        magenta "#C06BFF"
+        cyan "#3FD0C9"
+        white "#ECE8E1"
+        orange "#FF7A45"
+    }
+}

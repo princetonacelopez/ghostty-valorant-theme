@@ -1,0 +1,26 @@
+# Valorant dev HUD - Ghostty config
+theme = valorant
+
+# Full-screen HUD, no OS chrome
+fullscreen = true
+macos-non-native-fullscreen = true
+window-decoration = none
+window-padding-x = 4
+window-padding-y = 2
+confirm-close-surface = false
+
+# Glass: real window opacity + blur (per-pane transparency is not possible in a terminal)
+background-opacity = 0.88
+background-blur = 20
+
+# One font for the whole grid
+font-family = "JetBrainsMono Nerd Font"
+font-size = 13
+bold-is-bright = false
+adjust-cell-height = 2
+
+cursor-style = block
+cursor-style-blink = false
+
+# Launch the HUD (install.sh makes `zellij` resolvable; the layout lives in ~/.config/zellij/layouts)
+command = zellij --layout valorant

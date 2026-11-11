@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# "Buy menu": fuzzy-pick any weapon (including buy-menu-only ones) and equip it.
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+command -v fzf >/dev/null || { echo "fzf is required (run install.sh)"; sleep 2; exit 1; }
+pick=$(vhud-weapons list | fzf --ansi --reverse --no-info --prompt='BUY ▸ ' --header='◢ ARSENAL ◣  (enter = equip)' \
+  --color='bg:-1,fg:#ECE8E1,hl:#FF4655,pointer:#FF4655,prompt:#FF4655,header:#17DEA6,border:#FF4655' --border=sharp)
+[ -n "$pick" ] && vhud-weapons launch "$(awk '{print $2}' <<<"$pick")"

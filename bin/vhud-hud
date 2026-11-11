@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Floating HUD panel renderer. Usage: vhud-hud vitals|git|tickets
+# Draws a clipped-corner Valorant-style panel with a dark tinted fill and refreshes in place.
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+panel="${1:-vitals}"
+BG=$'\e[48;2;20;28;36m'   # panel fill, slightly lighter than the navy base
+
+body_vitals() {
+  local p s w; p=$(vhud-ping); s=$(vhud-stats); w=$(vhud-weather)
+  echo "NET|$p"
+  for k in CPU RAM BAT; do v=$(grep -o "$k [0-9]*%" <<<"$s" | awk '{print $2}'); [ -n "$v" ] && echo "$k|$v"; done
+  echo "WX|$w"
+  echo "HOST|$(hostname -s)"
+  echo "UP|$(uptime | sed -E 's/.*up +([^,]*(, *[0-9]+:[0-9]+)?).*/\1/' | cut -c1-18)"
+}
+body_git() { vhud-git detail; }
+body_tickets() {
+  echo "TICKET|$(vhud-jira current)"
+  echo "-|-"
+  vhud-jira list | head -3
+  echo "-|-"
+  vhud-bitbucket | head -3
+}
+
+title() { case "$panel" in vitals) echo "VITALS";; git) echo "LOADOUT // GIT";; tickets) echo "MISSION // TICKETS";; esac; }
+
+render() {
+  local cols rows t n=0 label val fill
+  cols=$(tput cols); rows=$(tput lines); t=" $(title) "
+  printf '\e[H'
+  fill=$(printf '━%.0s' $(seq 1 $(( cols - ${#t} - 2 > 0 ? cols - ${#t} - 2 : 0 ))))
+  printf '%s%s◢%s%s%s%s%s◥%s\n' "$BG" "$C_RED" "$C_WHITE" "$t" "$C_RED" "$fill" "$C_RED" "$C_RST"
+  n=1
+  while IFS='|' read -r label val && [ $n -lt $((rows - 1)) ]; do
+    if [ "$label" = "-" ]; then printf '%s%s %s%s\n' "$BG" "$C_DIM" "$(printf '╌%.0s' $(seq 1 $((cols - 2))))" "$C_RST"
+    else
+      local lw=7; [ "$label" = COMMIT ] && { val="$val"; lw=0; }
+      local txt; if [ "$lw" -eq 0 ]; then txt=" ${val}"; else txt=$(printf ' %-6s %s' "$label" "$val"); fi
+      txt="${txt:0:$((cols-1))}"
+      printf '%s%s%s%s%s' "$BG" "$C_DIM" "${txt:0:$((lw>0 ? lw+1 : 0))}" "$C_WHITE" "${txt:$((lw>0 ? lw+1 : 0))}"
+      printf '%*s%s\n' $(( cols - ${#txt} )) '' "$C_RST"
+    fi
+    n=$((n+1))
+  done
+  while [ $n -lt $((rows - 1)) ]; do printf '%s%*s%s\n' "$BG" "$cols" '' "$C_RST"; n=$((n+1)); done
+  printf '%s%s◣%s%s' "$BG" "$C_RED" "$(printf '━%.0s' $(seq 1 $((cols - 2))))" "$C_RST"
+}
+
+trap 'printf "\e[?25h"' EXIT
+printf '\e[?25l\e[2J'
+trap 'printf "\e[2J"' WINCH
+while :; do
+  out=$(body_"$panel" 2>/dev/null)
+  render <<<"$out"
+  sleep "${VHUD_REFRESH:-5}" & wait $!
+done

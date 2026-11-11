@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Open Bitbucket Cloud PRs for the current repo. Env: BITBUCKET_USER, BITBUCKET_TOKEN (never stored in repo).
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+[ -n "$BITBUCKET_USER" ] && [ -n "$BITBUCKET_TOKEN" ] || { echo "SET|BITBUCKET_* env vars"; exit 0; }
+cd "$(vhud_cwd)" 2>/dev/null
+slug=$(git remote get-url origin 2>/dev/null | sed -E 's#.*bitbucket\.org[:/]([^/]+/[^/.]+)(\.git)?$#\1#')
+case "$slug" in */*) ;; *) echo "NONE|not a bitbucket repo"; exit 0;; esac
+f="$VHUD_CACHE/bb-$(printf '%s' "$slug" | tr / _)"
+if ! cache_fresh "$f" 5; then
+  curl -fsm 6 -u "$BITBUCKET_USER:$BITBUCKET_TOKEN" \
+    "https://api.bitbucket.org/2.0/repositories/$slug/pullrequests?state=OPEN&pagelen=5" \
+    | jq -r '.values[]? | "#\(.id)|\(.title)"' > "$f" 2>/dev/null
+fi
+[ -s "$f" ] && cat "$f" || echo "NONE|no open PRs"

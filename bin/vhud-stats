@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# One-line system vitals: "CPU 12%  RAM 43%  BAT 87%"
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+case "$OS" in
+  Darwin)
+    ncpu=$(sysctl -n hw.ncpu); load=$(sysctl -n vm.loadavg | awk '{print $2}')
+    ps=$(sysctl -n hw.pagesize); mem=$(sysctl -n hw.memsize)
+    used=$(vm_stat | awk -v ps="$ps" '/Pages (active|wired down|occupied by compressor)/{gsub("\\.","",$NF);s+=$NF} END{print s*ps}')
+    ram=$(awk -v u="$used" -v m="$mem" 'BEGIN{printf "%d", u/m*100}')
+    bat=$(pmset -g batt 2>/dev/null | grep -Eo '[0-9]+%' | head -1 | tr -d '%') ;;
+  *)
+    ncpu=$(nproc); load=$(cut -d' ' -f1 /proc/loadavg)
+    ram=$(free | awk '/^Mem:/{printf "%d", $3/$2*100}')
+    bat=$(cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1) ;;
+esac
+cpu=$(awk -v l="$load" -v n="$ncpu" 'BEGIN{p=l/n*100; if(p>100)p=100; printf "%d", p}')
+out="CPU ${cpu}%  RAM ${ram}%"
+[ -n "$bat" ] && out="$out  BAT ${bat}%"
+echo "$out"

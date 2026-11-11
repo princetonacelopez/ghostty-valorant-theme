@@ -1,0 +1,32 @@
+theme "valorant"
+default_layout "valorant"
+pane_frames true
+simplified_ui false
+mouse_mode true
+copy_on_select true
+show_startup_tips false
+show_release_notes false
+session_serialization false
+
+ui {
+    pane_frames {
+        rounded_corners false
+        hide_session_name true
+    }
+}
+
+// Weapons: Alt+1..9 equip, Alt+b buy menu. Alt+f (default) toggles floating panes = the HUD.
+keybinds {
+    shared_except "locked" {
+        bind "Alt 1" { Run "vhud-weapons" "equip" "1" { floating true; close_on_exit true; }; }
+        bind "Alt 2" { Run "vhud-weapons" "equip" "2" { floating true; close_on_exit true; }; }
+        bind "Alt 3" { Run "vhud-weapons" "equip" "3" { floating true; close_on_exit true; }; }
+        bind "Alt 4" { Run "vhud-weapons" "equip" "4" { floating true; close_on_exit true; }; }
+        bind "Alt 5" { Run "vhud-weapons" "equip" "5" { floating true; close_on_exit true; }; }
+        bind "Alt 6" { Run "vhud-weapons" "equip" "6" { floating true; close_on_exit true; }; }
+        bind "Alt 7" { Run "vhud-weapons" "equip" "7" { floating true; close_on_exit true; }; }
+        bind "Alt 8" { Run "vhud-weapons" "equip" "8" { floating true; close_on_exit true; }; }
+        bind "Alt 9" { Run "vhud-weapons" "equip" "9" { floating true; close_on_exit true; }; }
+        bind "Alt b" { Run "vhud-buy" { floating true; close_on_exit true; x "25%"; y "20%"; width "50%"; height "50%"; }; }
+    }
+}

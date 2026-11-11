@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Jira helper (REST API). Env: JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN (never stored in repo).
+# Modes: current (ticket from branch name) | list (my open tickets)
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+have_creds() { [ -n "$JIRA_BASE_URL" ] && [ -n "$JIRA_EMAIL" ] && [ -n "$JIRA_API_TOKEN" ]; }
+api() { curl -fsm 6 -u "$JIRA_EMAIL:$JIRA_API_TOKEN" -H 'Accept: application/json' "$@"; }
+case "${1:-current}" in
+  current)
+    cd "$(vhud_cwd)" 2>/dev/null
+    key=$(git symbolic-ref --short HEAD 2>/dev/null | grep -Eo '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
+    [ -z "$key" ] && { echo "NO TICKET"; exit 0; }
+    f="$VHUD_CACHE/jira-$key"
+    if have_creds && ! cache_fresh "$f" 10; then
+      api "$JIRA_BASE_URL/rest/api/3/issue/$key?fields=status" | jq -r '.fields.status.name' > "$f" 2>/dev/null
+    fi
+    if [ -s "$f" ]; then echo "$key $(tr a-z A-Z < "$f")"; else echo "$key"; fi ;;
+  list)
+    have_creds || { echo "SET|JIRA_* env vars"; exit 0; }
+    f="$VHUD_CACHE/jira-list"
+    if ! cache_fresh "$f" 5; then
+      api -G "$JIRA_BASE_URL/rest/api/3/search/jql" \
+        --data-urlencode 'jql=assignee=currentUser() AND resolution=Unresolved ORDER BY updated DESC' \
+        --data-urlencode 'fields=summary,status' --data-urlencode 'maxResults=5' \
+        | jq -r '.issues[]? | "\(.key)|\(.fields.summary)"' > "$f" 2>/dev/null
+    fi
+    [ -s "$f" ] && cat "$f" || echo "NONE|no open tickets" ;;
+esac

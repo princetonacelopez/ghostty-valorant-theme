@@ -1,0 +1,88 @@
+// Valorant dev HUD layout.
+//  - top bar (zjstatus): left = vitals, center = DEV, right = tabs
+//  - center = main shell, flanked by blank gutters so floating HUD panels never cover it
+//  - bottom = weapon bar (tools)
+layout {
+    default_tab_template {
+        pane size=2 borderless=true {
+            plugin location="file:~/.local/share/zellij/plugins/zjstatus.wasm" {
+                format_left   "#[fg=#FF4655,bold] ◢ #[fg=#ECE8E1]{datetime}  #[fg=#768079]│  #[fg=#17DEA6]{command_ping}  #[fg=#768079]│  #[fg=#ECE8E1]{command_stats}  #[fg=#768079]│  #[fg=#ECE8E1]{command_weather}  #[fg=#768079]│  #[fg=#ECE8E1]{command_git}  #[fg=#768079]│  #[fg=#FF4655]{command_ticket}"
+                format_center "#[fg=#FF4655,bold]◢ #[fg=#ECE8E1,bold]D E V#[fg=#FF4655,bold] ◣"
+                format_right  "{tabs}#[fg=#FF4655,bold] ◥ "
+                format_space  ""
+
+                border_enabled  "true"
+                border_char     "─"
+                border_format   "#[fg=#FF4655]{char}"
+                border_position "bottom"
+
+                tab_normal        "#[fg=#768079] {index} {name} "
+                tab_active        "#[fg=#0F1923,bg=#FF4655,bold] {index} {name} "
+                tab_normal_fullscreen "#[fg=#768079] {index} {name} "
+                tab_active_fullscreen "#[fg=#0F1923,bg=#FF4655,bold] {index} {name} "
+
+                datetime          "#[fg=#ECE8E1,bold]{format}"
+                datetime_format   "%a %d %b  %H:%M"
+                datetime_timezone "local"
+
+                command_ping_command     "vhud-ping"
+                command_ping_format      "{stdout}"
+                command_ping_interval    "10"
+                command_ping_rendermode  "static"
+
+                command_stats_command    "vhud-stats"
+                command_stats_format     "{stdout}"
+                command_stats_interval   "5"
+                command_stats_rendermode "static"
+
+                command_weather_command    "vhud-weather"
+                command_weather_format     "{stdout}"
+                command_weather_interval   "300"
+                command_weather_rendermode "static"
+
+                command_git_command      "vhud-git"
+                command_git_format       "⎇ {stdout}"
+                command_git_interval     "5"
+                command_git_rendermode   "static"
+
+                command_ticket_command    "vhud-jira current"
+                command_ticket_format     "{stdout}"
+                command_ticket_interval   "60"
+                command_ticket_rendermode "static"
+            }
+        }
+        children
+    }
+
+    tab name="DEV" focus=true {
+        pane split_direction="horizontal" {
+            pane split_direction="vertical" {
+                // left gutter (floating VITALS panel sits here)
+                pane size=32 borderless=true command="bash" {
+                    args "-c" "printf '\\033[?25l'; exec sleep infinity"
+                }
+                // main shell: the "crosshair"
+                pane name="MAIN" focus=true borderless=true
+                // right gutter (floating GIT + TICKETS panels sit here)
+                pane size=40 borderless=true command="bash" {
+                    args "-c" "printf '\\033[?25l'; exec sleep infinity"
+                }
+            }
+            // bottom: weapon bar
+            pane size=4 borderless=true command="vhud-weapons" {
+                args "bar"
+            }
+        }
+        floating_panes {
+            pane name="VITALS" command="vhud-hud" x=1 y=3 width=30 height=11 pinned=true {
+                args "vitals"
+            }
+            pane name="GIT" command="vhud-hud" x="100%" y=3 width=38 height=9 pinned=true {
+                args "git"
+            }
+            pane name="TICKETS" command="vhud-hud" x="100%" y=13 width=38 height=13 pinned=true {
+                args "tickets"
+            }
+        }
+    }
+}

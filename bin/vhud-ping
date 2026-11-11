@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Valorant-style ping readout. Prints "PING 23MS" or "OFFLINE".
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+host="${VHUD_PING_HOST:-1.1.1.1}"
+if [ "$OS" = Darwin ]; then out=$(ping -c1 -W 2000 "$host" 2>/dev/null); else out=$(ping -c1 -W 2 "$host" 2>/dev/null); fi
+ms=$(printf '%s' "$out" | sed -n 's/.*time[=<]\([0-9.]*\).*/\1/p' | head -1)
+if [ -z "$ms" ]; then  # ICMP blocked? fall back to TCP connect time
+  t=$(curl --noproxy "*" -so /dev/null -m 3 -w '%{time_connect}' "http://$host" 2>/dev/null)
+  ms=$(awk -v t="$t" 'BEGIN{ if (t>0) printf "%d", t*1000 }')
+fi
+if [ -n "$ms" ]; then printf 'PING %dMS\n' "${ms%.*}"; else echo "OFFLINE"; fi

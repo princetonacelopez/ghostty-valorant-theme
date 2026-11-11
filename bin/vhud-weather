@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Weather via wttr.in (keyless), cached 15 min. City from $VHUD_CITY, else IP auto-detect.
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+f="$VHUD_CACHE/weather"
+if ! cache_fresh "$f" 15; then
+  city="${VHUD_CITY// /+}"
+  w=$(curl -fsm 4 "https://wttr.in/${city}?format=%t+%C" 2>/dev/null | tr -d '\n')
+  [ -n "$w" ] && ! printf '%s' "$w" | grep -qi 'unknown\|<html' && printf "%s\n" "$w" > "$f"
+fi
+if [ -s "$f" ]; then printf "%s\n" "$(cat "$f")"; else echo "N/A"; fi

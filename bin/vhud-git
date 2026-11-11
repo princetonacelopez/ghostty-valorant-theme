@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# "branch ±dirty" for the active shell directory. Modes: line (default) | detail
+. "$(dirname "$(readlink -f "$0")")/vhud-lib.sh"
+cd "$(vhud_cwd)" 2>/dev/null || exit 0
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "NO REPO"; exit 0; }
+br=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD)
+dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+case "${1:-line}" in
+  detail)
+    echo "BRANCH|$br"
+    echo "DIRTY|$dirty files"
+    ab=$(git rev-list --left-right --count '@{u}...HEAD' 2>/dev/null | awk '{print "behind "$1" / ahead "$2}')
+    echo "SYNC|${ab:-no upstream}"
+    git log -3 --pretty='COMMIT|%h %s' 2>/dev/null ;;
+  *) if [ "$dirty" -gt 0 ]; then echo "$br ±$dirty"; else echo "$br ✓"; fi ;;
+esac
